@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+brotli
+sqlalchemy
+pandas
+flask

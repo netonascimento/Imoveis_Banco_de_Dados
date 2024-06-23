@@ -1,0 +1,33 @@
+/* static/style.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container-fluid {
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.description {
+    cursor: pointer;
+    color: blue;
+    text-decoration: underline;
+}
+
+.table-responsive {
+    margin-top: 20px;
+}
+
+thead th {
+    cursor: pointer;
+}
+
+.tooltip-inner {
+    white-space: pre-wrap; /* Allows long descriptions to wrap in the tooltip */
+}
