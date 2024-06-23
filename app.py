@@ -1,6 +1,6 @@
 from flask import Flask, render_template, jsonify, redirect, url_for, send_file
 from models import Session, Imovel
-from  export_to_excel import export_to_xlsx
+from CapturaImoveisLeiloesPE import save_to_csv
 import os
 
 app = Flask(__name__)
@@ -26,12 +26,14 @@ def api_imoveis():
         'valor_primeiro_leilao': imovel.valor_primeiro_leilao,
         'data_segundo_leilao': imovel.data_segundo_leilao,
         'valor_segundo_leilao': imovel.valor_segundo_leilao,
-        'descricao': imovel.descricao,
+        'descricao_completa': imovel.descricao,
+        'descricao_resumida': imovel.descricao[:50] + '...' if len(imovel.descricao) > 50 else imovel.descricao,
         'imagem': imovel.imagem,
         'cidade': imovel.cidade,
         'estado': imovel.estado,
         'disponivel': imovel.disponivel,
-        'local': imovel.local
+        'local': imovel.local,
+        'localizacao': imovel.localizacao
     } for imovel in imoveis]
 
     return jsonify(imoveis_data)
@@ -43,8 +45,8 @@ def atualizar():
 
 @app.route('/exportar')
 def exportar():
-    xlsx_path = export_to_xlsx()
-    return send_file(xlsx_path, as_attachment=True)
+    csv_path = save_to_csv(Session())
+    return send_file(csv_path, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

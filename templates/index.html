@@ -2,188 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imóveis Capturados</title>
+    <title>Imóveis</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            padding: 20px;
+        }
+        .tooltip-inner {
+            max-width: 350px;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
 <body>
-    <div class="container-fluid mt-5">
-        <h1 class="text-center">Imóveis Capturados</h1>
-        <div class="row my-3">
-            <div class="col text-left">
-                <button class="btn btn-primary" onclick="atualizarDados()">Atualizar Dados</button>
-            </div>
-            <div class="col text-right">
-                <button class="btn btn-success" onclick="exportarDados()">Exportar para Excel</button>
-            </div>
+    <div class="container-fluid">
+        <h1 class="mb-4">Imóveis</h1>
+        <div class="form-group">
+            <label for="estado">Estado:</label>
+            <select id="estado" class="form-control">
+                <option value="">Todos</option>
+            </select>
         </div>
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <input type="text" id="searchInput" class="form-control" placeholder="Filtrar por texto..." onkeyup="filterTable()">
-            </div>
-            <div class="col-md-6">
-                <select id="stateFilter" class="form-control" onchange="filterTable()">
-                    <option value="">Todos os Estados</option>
-                    {% for estado in estados %}
-                    <option value="{{ estado }}" {% if estado == default_estado %}selected{% endif %}>{{ estado }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+        <div class="form-group">
+            <label for="pesquisa">Pesquisar:</label>
+            <input type="text" id="pesquisa" class="form-control" placeholder="Pesquisar...">
         </div>
-        <div class="table-responsive">
-            <table class="table table-bordered" id="imoveisTable">
-                <thead class="thead-dark">
-                    <tr>
-                        <th onclick="sortTable(0)">URL</th>
-                        <th onclick="sortTable(1)">Título</th>
-                        <th onclick="sortTable(2)">Data do Primeiro Leilão</th>
-                        <th onclick="sortTable(3)">Valor do Primeiro Leilão</th>
-                        <th onclick="sortTable(4)">Data do Segundo Leilão</th>
-                        <th onclick="sortTable(5)">Valor do Segundo Leilão</th>
-                        <th onclick="sortTable(6)">Descrição</th>
-                        <th>Imagem</th>
-                        <th onclick="sortTable(8)">Cidade</th>
-                        <th onclick="sortTable(9)">Estado</th>
-                        <th onclick="sortTable(10)">Disponível</th>
-                        <th onclick="sortTable(11)">Local</th>
-                    </tr>
-                </thead>
-                <tbody id="imoveisTableBody">
-                    <!-- Dados serão carregados via AJAX -->
-                </tbody>
-            </table>
+        <div class="mb-4">
+            <button id="atualizar" class="btn btn-primary">Atualizar</button>
+            <button id="exportar" class="btn btn-secondary">Exportar para CSV</button>
         </div>
-    </div>
-
-    <!-- Modal -->
-    <div class="modal fade" id="descriptionModal" tabindex="-1" role="dialog" aria-labelledby="descriptionModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="descriptionModalLabel">Descrição Completa</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="modal-description">
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                </div>
-            </div>
-        </div>
+        <table class="table table-bordered">
+            <thead class="thead-light">
+                <tr>
+               
+                    <th>Data do Primeiro Leilão</th>
+                    <th>Valor do Primeiro Leilão</th>
+                    <th>Data do Segundo Leilão</th>
+                    <th>Valor do Segundo Leilão</th>
+                    <th>Descrição</th>
+                    <th>Cidade</th>
+                    <th>Estado</th>
+                    <th>Disponível</th>
+                    <th>Local</th>
+                    <th>Localização</th>
+                    <th>Imagem</th>
+                </tr>
+            </thead>
+            <tbody id="imoveis-tbody">
+            </tbody>
+        </table>
     </div>
 
     <script>
-        $(document).ready(function(){
-            loadImoveis();
-        });
-
-        function loadImoveis() {
-            $.getJSON('/api/imoveis', function(data) {
-                var tableBody = $('#imoveisTableBody');
-                tableBody.empty();
+        $(document).ready(function() {
+            $.get('/api/imoveis', function(data) {
+                var estados = new Set();
+                var tbody = $('#imoveis-tbody');
+                tbody.empty();
                 data.forEach(function(imovel) {
-                    var row = `<tr>
-                        <td><a href="${imovel.url}" target="_blank">${imovel.url}</a></td>
-                        <td>${imovel.titulo}</td>
-                        <td>${imovel.data_primeiro_leilao}</td>
-                        <td>${imovel.valor_primeiro_leilao}</td>
-                        <td>${imovel.data_segundo_leilao}</td>
-                        <td>${imovel.valor_segundo_leilao}</td>
-                        <td>
-                            <div class="description" onmouseover="showModal('${imovel.descricao}')">
-                                ${imovel.descricao.substring(0, 30)}...
-                            </div>
-                        </td>
-                        <td><img src="${imovel.imagem}" alt="Imagem" class="img-fluid" width="100"></td>
-                        <td>${imovel.cidade}</td>
-                        <td>${imovel.estado}</td>
-                        <td>${imovel.disponivel ? 'Sim' : 'Não'}</td>
-                        <td>${imovel.local}</td>
-                    </tr>`;
-                    tableBody.append(row);
+                    estados.add(imovel.estado);
+                    var row = '<tr>' +
+                  
+                        '<td>' + imovel.data_primeiro_leilao + '</td>' +
+                        '<td>' + imovel.valor_primeiro_leilao + '</td>' +
+                        '<td>' + imovel.data_segundo_leilao + '</td>' +
+                        '<td>' + imovel.valor_segundo_leilao + '</td>' +
+                        '<td><span title="' + imovel.descricao_completa + '">' + imovel.descricao_resumida + '</span></td>' +
+                        '<td>' + imovel.cidade + '</td>' +
+                        '<td>' + imovel.estado + '</td>' +
+                        '<td>' + (imovel.disponivel ? 'Sim' : 'Não') + '</td>' +
+                        '<td>' + imovel.local + '</td>' +
+                        '<td>' + imovel.localizacao + '</td>' +
+                        '<td><img src="' + imovel.imagem + '" alt="Imagem do Imóvel" width="100"></td>' +
+                        '</tr>';
+                    tbody.append(row);
+                });
+
+                var select = $('#estado');
+                estados.forEach(function(estado) {
+                    select.append('<option value="' + estado + '">' + estado + '</option>');
+                });
+
+                $('[title]').tooltip();
+            });
+
+            $('#atualizar').click(function() {
+                window.location.href = '/atualizar';
+            });
+
+            $('#exportar').click(function() {
+                window.location.href = '/exportar';
+            });
+
+            $('#estado').change(function() {
+                var estado = $(this).val().toLowerCase();
+                $('#imoveis-tbody tr').each(function() {
+                    var row = $(this);
+                    var estadoCell = row.find('td:eq(7)').text().toLowerCase();
+                    if (estado === '' || estadoCell === estado) {
+                        row.show();
+                    } else {
+                        row.hide();
+                    }
                 });
             });
-        }
 
-        function showModal(description) {
-            document.getElementById('modal-description').innerText = description;
-            $('#descriptionModal').modal('show');
-        }
-
-        function sortTable(n) {
-            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-            table = document.getElementById("imoveisTable");
-            switching = true;
-            dir = "asc"; 
-            while (switching) {
-                switching = false;
-                rows = table.rows;
-                for (i = 1; i < (rows.length - 1); i++) {
-                    shouldSwitch = false;
-                    x = rows[i].getElementsByTagName("TD")[n];
-                    y = rows[i + 1].getElementsByTagName("TD")[n];
-                    if (dir == "asc") {
-                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                            shouldSwitch = true;
-                            break;
-                        }
-                    } else if (dir == "desc") {
-                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                            shouldSwitch = true;
-                            break;
-                        }
+            $('#pesquisa').on('input', function() {
+                var termo = $(this).val().toLowerCase();
+                $('#imoveis-tbody tr').each(function() {
+                    var row = $(this);
+                    var texto = row.text().toLowerCase();
+                    if (texto.indexOf(termo) !== -1) {
+                        row.show();
+                    } else {
+                        row.hide();
                     }
-                }
-                if (shouldSwitch) {
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                    switchcount ++;
-                } else {
-                    if (switchcount == 0 && dir == "asc") {
-                        dir = "desc";
-                        switching = true;
-                    }
-                }
-            }
-        }
-
-        function filterTable() {
-            var input, filter, stateFilter, table, tr, td, i, j, txtValue;
-            input = document.getElementById("searchInput");
-            filter = input.value.toLowerCase();
-            stateFilter = document.getElementById("stateFilter").value;
-            table = document.getElementById("imoveisTable");
-            tr = table.getElementsByTagName("tr");
-            for (i = 1; i < tr.length; i++) {
-                tr[i].style.display = "none";
-                td = tr[i].getElementsByTagName("td");
-                for (j = 0; j < td.length; j++) {
-                    if (td[j]) {
-                        txtValue = td[j].textContent || td[j].innerText;
-                        if (txtValue.toLowerCase().indexOf(filter) > -1 && (stateFilter === "" || td[9].innerText === stateFilter)) {
-                            tr[i].style.display = "";
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        function atualizarDados() {
-            $.get('/atualizar', function() {
-                loadImoveis();
+                });
             });
-        }
-
-        function exportarDados() {
-            window.location.href = '/exportar';
-        }
+        });
     </script>
 </body>
 </html>

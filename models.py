@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, String, Integer, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, Boolean, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -18,7 +18,11 @@ class Imovel(Base):
     cidade = Column(String)
     estado = Column(String)
     disponivel = Column(Boolean, default=True)
-    local = Column(String)  # Novo campo
+    local = Column(String)
+    area = Column(Float)  # Novo campo para a área do imóvel
+    custo_por_m2_primeiro_leilao = Column(Float)  # Custo por m² no primeiro leilão
+    custo_por_m2_segundo_leilao = Column(Float)  # Custo por m² no segundo leilão
+    localizacao = Column(String)  # Novo campo para a localização do bem
 
 # Configuração do banco de dados
 engine = create_engine('sqlite:///imoveis.db')
